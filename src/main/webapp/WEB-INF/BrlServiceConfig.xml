@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/beans"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans 
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd
+       http://www.springframework.org/schema/tx 
+       http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+	<import resource="BaseDAOConfig.xml"/>
+
+	<!--web访问service-->
+	<bean id="baseService" class="com.zzm.service.BaseServiceImpl">
+		<property name="baseDao" ref="baseDao"></property>
+		<property name="transaction" ref="baseTransactionTemplate"></property>
+	</bean>
+
+	<!-- 测试testService -->
+	<bean id="testService" class="com.zzm.service.testService.impl.TestServiceImpl" parent="baseService"/>
+
+
+
+	<!-- 配置事务增强（如何管理事务，只读、读写...） -->
+	<tx:advice id="txAdvice" transaction-manager="baseTransactionManager">
+		<tx:attributes>
+			<tx:method name="do*" propagation="REQUIRED" rollback-for="Exception" />
+			<tx:method name="add*" propagation="REQUIRED" rollback-for="Exception" />
+			<tx:method name="save*" propagation="REQUIRED" rollback-for="Exception" />
+            <tx:method name="del*" propagation="REQUIRED" rollback-for="Exception" />
+            <tx:method name="mod*" propagation="REQUIRED" rollback-for="Exception" />
+			<tx:method name="ins*" propagation="REQUIRED" rollback-for="Exception" />
+			<tx:method name="upd*" propagation="REQUIRED" rollback-for="Exception" />
+			<tx:method name="login" propagation="REQUIRED" rollback-for="Exception" />
+			<tx:method name="invoke" propagation="REQUIRES_NEW" rollback-for="Exception" />
+			<tx:method name="*" propagation="SUPPORTS" read-only="true" />
+		</tx:attributes>
+	</tx:advice>
+
+	<bean id="aopTestXML" class="com.zzm.aop.xml.AopTestXML"></bean>
+
+	<!--aop配置，拦截方法（切入点表达式，拦截上面的事务增强）-->
+	<aop:config>
+	  <!--通过aop定义事务增强切面-->
+      <aop:pointcut id="bussinessService" expression="execution(* com.zzm.service..*.*(..))" />
+      <!--引用事务增强-->
+      <aop:advisor pointcut-ref="bussinessService" advice-ref="txAdvice" />
+
+		<aop:aspect id="myAspect" ref="aopTestXML">
+			<aop:pointcut  id="myPointCut"  expression="execution(public * com.zzm.service.testService.TestService.*(..))" />
+			<aop:before pointcut-ref="myPointCut" method="before" />
+			<aop:after-returning pointcut-ref="myPointCut"  method="AfterReturning" />
+			<aop:after-throwing pointcut-ref="myPointCut"  method="AfterThrowing" />
+			<aop:after pointcut-ref="myPointCut" method="after" />
+		</aop:aspect>
+    </aop:config>
+
+
+ </beans>

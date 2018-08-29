@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+  xmlns:beans="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans
+    					http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+    					http://www.springframework.org/schema/context
+    					http://www.springframework.org/schema/context/spring-context-3.1.xsd
+              http://www.springframework.org/schema/tx
+              http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+              http://www.springframework.org/schema/security
+              http://www.springframework.org/schema/security/spring-security.xsd">
+  <http pattern="/jsp/login.jsp" security="none"></http>
+  <http auto-config="false">
+  <!--<http auto-config='true'>-->
+    <!--登入页不需要任何权限  此方法为写死在配置文件  实际开发需要动态读取数据库-->
+    <!--<intercept-url pattern="/jsp/login.jsp" access="IS_AUTHENTICATED_ANONYMOUSLY" />-->
+    <!--<intercept-url pattern="/jsp/adminPage.jsp" access="ROLE_ADMIN" />-->
+    <!--<intercept-url pattern="/*.action" access="ROLE_USER" />-->
+    <!--<intercept-url pattern="/jsp/**" access="ROLE_USER" />-->
+    <form-login login-page="/jsp/login.jsp" default-target-url="/jsp/index.jsp"
+      authentication-failure-url="/jsp/login.jsp?error=true" />
+    <logout invalidate-session="true"
+      logout-success-url="/jsp/login.jsp"
+      logout-url="/j_spring_security_logout"/>
+    <!-- 通过配置custom-filter来增加过滤器，before="FILTER_SECURITY_INTERCEPTOR"表示在SpringSecurity默认的过滤器之前执行。 -->
+    <custom-filter ref="filterSecurityInterceptor" before="FILTER_SECURITY_INTERCEPTOR" />
+  </http>
+
+  <!--<authentication-manager>-->
+    <!--<authentication-provider>-->
+      <!--&lt;!&ndash;从数据库读取用户名密码  自定义表结构&ndash;&gt;-->
+      <!--<jdbc-user-service data-source-ref="dataSource"-->
+        <!--users-by-username-query="select username,password,status as enabled from user where username = ?"-->
+        <!--authorities-by-username-query="select user.username,role.name from user,role,user_role-->
+	                                        <!--where user.id=user_role.user_id-->
+	                                        <!--and user_role.role_id=role.id and user.username=?"-->
+      <!--/>-->
+      <!--&lt;!&ndash;写死用户名密码&ndash;&gt;-->
+      <!--&lt;!&ndash;<user-service>&ndash;&gt;-->
+        <!--&lt;!&ndash;<user name="admin" password="123" authorities="ROLE_USER, ROLE_ADMIN" />&ndash;&gt;-->
+        <!--&lt;!&ndash;<user name="user" password="123" authorities="ROLE_USER" />&ndash;&gt;-->
+      <!--&lt;!&ndash;</user-service>&ndash;&gt;-->
+    <!--</authentication-provider>-->
+  <!--</authentication-manager>-->
+
+  <beans:bean id="builder" class="com.zzm.security.JdbcRequestMapBuilder">
+    <beans:property name="dataSource" ref="dataSource" />
+    <beans:property name="resourceQuery"
+      value="select re.res_string,r.name from role r,resc re,resc_role rr where
+		r.id=rr.role_id and re.id=rr.resc_id" />
+  </beans:bean>
+
+
+  <!-- 认证过滤器 -->
+  <beans:bean id="filterSecurityInterceptor"
+    class="org.springframework.security.web.access.intercept.FilterSecurityInterceptor">
+    <!-- 用户拥有的权限 -->
+    <beans:property name="accessDecisionManager" ref="accessDecisionManager" />
+    <!-- 用户是否拥有所请求资源的权限 -->
+    <beans:property name="authenticationManager" ref="authenticationManager" />
+    <!-- 资源与权限对应关系 -->
+    <beans:property name="securityMetadataSource" ref="securityMetadataSource" />
+  </beans:bean>
+
+  <!-- 授权管理器 -->
+  <beans:bean class="com.zzm.security.MyAccessDecisionManager" id="accessDecisionManager">
+  </beans:bean>
+  <!--认证管理-->
+  <authentication-manager alias="authenticationManager">
+    <authentication-provider>
+      <jdbc-user-service data-source-ref="dataSource" id="usersService"
+        users-by-username-query="select username,password,status as enabled from user where username = ?"
+        authorities-by-username-query="select user.username,role.name from user,role,user_role
+	   	        					where user.id=user_role.user_id and
+	   	        					user_role.role_id=role.id and user.username=?" />
+    </authentication-provider>
+  </authentication-manager>
+  <!--自定义的切入点-->
+  <beans:bean id="securityMetadataSource"
+    class="com.zzm.security.MyFilterInvocationSecurityMetadataSource">
+    <beans:property name="builder" ref="builder"></beans:property>
+  </beans:bean>
+
+
+</beans:beans>

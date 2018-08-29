@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans 
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd">
+
+  <!--！！！！这里改用applicationContext.xml里配置的数据源，如使用下面的baseDataSource会导致读取不到配置文件，鼠标能点进去，但是启动项目就是读不到配置-->
+  <!--配置C3P0连接池 -->
+    <!--<bean id="baseDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">-->
+      <!--<property name="driverClass" value="${jdbc.driver}"/>-->
+		  <!--<property name="jdbcUrl" value="${jdbc.url}" />-->
+		  <!--<property name="user" value="${jdbc.username}" />-->
+		  <!--<property name="password" value="${jdbc.password}" />-->
+	    <!--<property name="autoCommitOnClose" value="true"/> &lt;!&ndash;连接关闭时默认将所有未提交的操作回滚。Default: false &ndash;&gt;-->
+	    <!--<property name="minPoolSize" value="${c3p0.pool.minPoolSize}"/>&lt;!&ndash;连接池中保留的最小连接数。Default: 3 &ndash;&gt;-->
+	    <!--<property name="maxPoolSize" value="${c3p0.pool.maxPoolSize}"/>&lt;!&ndash;连接池中保留的最大连接数。Default: 15 &ndash;&gt;-->
+	    <!--<property name="initialPoolSize" value="${c3p0.pool.initialPoolSize}"/>&lt;!&ndash;初始化时获取三个连接，取值应在minPoolSize与maxPoolSize之间。Default: 3 &ndash;&gt;-->
+	    <!--<property name="maxIdleTime" value="${c3p0.pool.maxIdleTime}"/>&lt;!&ndash;最大空闲时间,60秒内未使用则连接被丢弃。若为0则永不丢弃。Default: 0 &ndash;&gt;-->
+	    <!--<property name="acquireIncrement" value="${c3p0.pool.acquireIncrement}"/>&lt;!&ndash;当连接池中的连接耗尽的时候c3p0一次同时获取的连接数。Default: 3 &ndash;&gt;-->
+	    <!--<property name="acquireRetryAttempts" value="5"/>&lt;!&ndash;定义在从数据库获取新连接失败后重复尝试的次数。Default: 30 &ndash;&gt;-->
+      <!--<property name="checkoutTimeout" value="${c3p0.pool.checkoutTimeout}"/>&lt;!&ndash;当连接池用完时客户端调用getConnection()后等待获取新连接的时间，超时后将抛出 SQLException,如设为0则无限期等待。单位毫秒。Default: 0 &ndash;&gt;-->
+    <!--</bean>-->
+
+	 <!-- Hibernate SessionFactory -->
+	  <bean id="baseSessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+   		<property name="dataSource">
+            <!--<ref bean="baseDataSource" />-->
+        <ref bean="dataSource" />
+        </property>
+		<property name="packagesToScan">
+			<list>
+				<value>com.zzm.domain</value>
+			</list>
+		</property>
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+                <prop key="hibernate.show_sql">true</prop>
+                <prop key="hibernate.jdbc.batch_size">50</prop>
+				<prop key="hibernate.jdbc.fetch_size">50</prop>
+				<!-- 新增pojo schema 自动切换的功能-->
+				<prop key="hibernate.default_schema">${jdbc.username}</prop>
+            </props>
+        </property>
+    </bean>
+
+     <!--TransactionManager,不管JDBC还是hibernate都使用，可以实现混合事务-->
+    <bean id="baseTransactionManager"
+		class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+        <property name="sessionFactory" ref="baseSessionFactory" />
+    </bean>
+	<!--TransactionTemplate-->
+	 <bean id="baseTransactionTemplate"
+        class="org.springframework.transaction.support.TransactionTemplate">
+        <property name="transactionManager">
+            <ref bean="baseTransactionManager" />
+        </property>
+    </bean>
+
+     <!--Hibernate DAO-->
+   <bean id="baseHibernateDao" class="com.zzm.dao.HibernateDAO">
+        <property name="sessionFactory" ref="baseSessionFactory"/>
+    </bean>
+	<!--JdbcTemplate DAO-->
+    <bean id="baseJdbcTemplateDao" class="org.springframework.jdbc.core.JdbcTemplate">
+        <!--<property name="dataSource" ref="baseDataSource"/>-->
+      <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!--web访问底层抽象类,统一注入dao-->
+   <bean id="baseDao" class="com.zzm.dao.impl.BaseDaoImpl">
+      <property name="hibernateDAO" ref="baseHibernateDao"></property>
+	  <property name="jdbcTemplateDAO" ref="baseJdbcTemplateDao"></property>
+   </bean>
+	
+</beans>

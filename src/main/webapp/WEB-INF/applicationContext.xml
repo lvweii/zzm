@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:task="http://www.springframework.org/schema/task"
+  xmlns:context="http://www.springframework.org/schema/context"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/task
+        http://www.springframework.org/schema/task/spring-task-4.0.xsd
+       ">
+  <!-- 该 BeanPostProcessor 将自动起作用，对标注 @Autowired 的 Bean 进行自动注入 -->
+  <!--<bean class="org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor"/>-->
+
+  <!-- 读取配置文件信息,在Spring的配置文件中使用EL表达式填充值   这种方法spring容器中只能使用一次-->
+  <context:property-placeholder location="/WEB-INF/jdbc.properties"/>
+
+  <import resource="security.xml"/>
+  <import resource="BaseDAOConfig.xml"/>
+
+  <!-- 数据源配置,使用C3P0数据库连接池 -->
+  <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close" >
+    <property name="driverClass" value="${jdbc.driver}" />
+    <property name="jdbcUrl" value="${jdbc.url}" />
+    <property name="user" value="${jdbc.username}" />
+    <property name="password" value="${jdbc.password}" />
+    <!--
+    <property name="autoCommitOnClose" value="true"> -->
+
+    <property name="checkoutTimeout" value="${c3p0.pool.checkoutTimeout}" />
+    <property name="initialPoolSize" value="${c3p0.pool.initialPoolSize}" />
+    <property name="minPoolSize" value="${c3p0.pool.minPoolSize}" />
+    <property name="maxPoolSize" value="${c3p0.pool.maxPoolSize}" />
+    <property name="maxIdleTime" value="${c3p0.pool.maxIdleTime}" />
+    <property name="acquireIncrement" value="${c3p0.pool.acquireIncrement}" />
+    <property name="idleConnectionTestPeriod" value="${c3p0.pool.idleConnectionTestPeriod}" />
+    <property name="automaticTestTable" value="${c3p0.pool.automaticTestTable}" />
+  </bean>
+
+</beans>
+
+
+
