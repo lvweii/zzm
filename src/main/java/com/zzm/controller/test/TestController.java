@@ -30,7 +30,6 @@ public class TestController {
 
   @Resource
   TestService testService;
-
   
   @RequestMapping(value = "/testJpa.action",method = RequestMethod.GET)
   public String testJpa(HttpServletRequest req,HttpServletResponse resp) {
