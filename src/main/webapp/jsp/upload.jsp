@@ -11,7 +11,7 @@
     <title>Title</title>
 </head>
 <body>
-<form action="/testUpload.action" enctype="multipart/form-data"
+<form action="/testUpload1.action" enctype="multipart/form-data"
       method="post">
     上传用户：<input type="text" name="username"/><br/>
     上传文件：<input type="file" name="file"/><br/>

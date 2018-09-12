@@ -4,6 +4,7 @@ import com.zzm.domain.User;
 import com.zzm.service.testService.TestService;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -12,6 +13,7 @@ import java.sql.Statement;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -25,6 +27,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 /**
  * TestController ：
@@ -91,7 +95,9 @@ public class TestController {
   }
 
   /**
+   *  项目中未配置multipartResolver时的上传方法
    *  保存文档到服务器磁盘，返回值true，保存成功，返回值为false时，保存失败。
+   *  暂时只是绝对路径，相对路径后面再改
    */
   @RequestMapping(value = {"/testUpload.action"}, method = {RequestMethod.GET,RequestMethod.POST})
   @ResponseBody
@@ -99,7 +105,7 @@ public class TestController {
   {
     File officeFileUpload = null;
     FileItem officeFileItem = null;
-    String officefileNameDisk = new Date().getTime()+".docx";
+    String officefileNameDisk = new Date().getTime()+".doc";
     String absoluteOfficeFileDir = "C:\\Users\\Lv\\Desktop\\upload\\office";
     boolean result=true ;
 
@@ -112,19 +118,6 @@ public class TestController {
     //设置允许用户上传文件大小,单位:字节
     upload.setSizeMax(1024*1024*4);
     List fileItems = null;
-//    Iterator<String> iterator = req.getFileNames();
-//    while (iterator.hasNext()) {
-//      MultipartFile file = req.getFile(iterator.next());
-//      String fileNames = file.getOriginalFilename();
-//      int split = fileNames.lastIndexOf(".");
-//      //存储文件
-//      //文件名
-//      System.out.println(fileNames.substring(0,split));
-//      //文件格式
-//      System.out.println(fileNames.substring(split+1,fileNames.length()));
-//      //文件内容
-////      System.out.println(file.getBytes());
-//    }
     try{fileItems=upload.parseRequest(request);}
     catch(FileUploadException e)
     {
@@ -169,6 +162,31 @@ public class TestController {
       System.out.println("error saveFileToDisk:"+e.getMessage());
       e.printStackTrace();
       result=false;
+    }
+    return result;
+  }
+
+  /**
+   *  项目中配置了multipartResolver时的上传方法(form里面的文本字段不能一起传？不过实际项目中也不需要)
+   *  保存文档到服务器磁盘，返回值true，保存成功，返回值为false时，保存失败。
+   *  暂时只是绝对路径，相对路径后面再改
+   */
+  @RequestMapping(value = {"/testUpload1.action"}, method = {RequestMethod.GET,RequestMethod.POST})
+  @ResponseBody
+  public boolean saveFileToDisk1(HttpServletRequest request,HttpServletResponse response)
+  {
+    boolean result=true ;
+    String absoluteOfficeFileDir = "C:\\Users\\Lv\\Desktop\\upload\\office";
+    MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest)request;
+    for (Map.Entry<String,MultipartFile> me : multipartRequest.getFileMap().entrySet()){
+      MultipartFile mfile = me.getValue();
+      File file = new File(absoluteOfficeFileDir+mfile.getOriginalFilename());
+      //上传文件
+      try {
+        mfile.transferTo(file);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
     }
     return result;
   }
